@@ -29,25 +29,34 @@ data = json.loads( content )
 
 if not args.pools:
     # print the server's stats
-    print args.server_addr, args.server_port
-    print "================="
+    addr_str = "%s:%d" % ( args.server_addr, args.server_port )
+    print addr_str
+    print "=" * len( addr_str )
     for k in data.keys():
         if k[0] == k[0].lower():
-            print "\t", k, data[k]
+            print "%10s : %s" % ( k, data[k] )
 
     # display the available pools
     print "\n\n"
-    print "available pools"
-    print "================="
-    for k in data.keys():
+    print "available pools (backends/connections/server_ejections)"
+    print "======================================================="
+    for k in sorted( data.keys() ):
         if k[0] == k[0].upper():
             client_connections = data[k]['client_connections']
             server_ejects = data[k]['server_ejects']
             num_of_backends = 0
+            footnote = ''
+
             for bk in data[k].keys():
                 if ":" in bk:
                     num_of_backends += 1
-            print "\t", "%s ( %d/%d/%d )" % ( k, num_of_backends, client_connections, server_ejects )
+
+           
+            if num_of_backends == 0:
+                footnote += '*'
+            if server_ejects > 0:
+                footnote += '!'
+            print "%25s ( %d/%d/%d ) %s" % ( k, num_of_backends, client_connections, server_ejects, footnote )
 
 else:
     for pool in args.pools:
