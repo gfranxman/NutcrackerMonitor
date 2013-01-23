@@ -1,22 +1,30 @@
 #! /usr/bin/env python
-import argparse
 
+'''
+    since nutcracker's status structure doesnt separate its backends from 
+    its other configuration details we'll assume those with colons are backends
+    we do some trickery with the keys:
+        UPPERCASE keys are pool names
+        lowercase keys are attributes
+        keys:with:colons are backend servers
+    maybe I should submit a patch that includes a status version number and fixes this to nutcracker
+'''
+
+import argparse # python2.7+
 import socket
 import json
 from pprint import pprint
 
+# parse the command line
 parser = argparse.ArgumentParser(description='Nutcracker monitor')
 parser.add_argument("server_addr", help="the nutcracker server hostname",)
-
 parser.add_argument('--port', action='store',dest='server_port', help='the nutcracker port', default=22222, type=int )
-
 parser.add_argument("pools", metavar='poolname',  nargs='*', help="one or more pool names, empty to list them")
 
 args = parser.parse_args()
 
-pprint( args )
 
-
+# connect and parse the results
 conn = socket.create_connection( (args.server_addr, args.server_port) )
 buf = True
 content = ''
@@ -27,6 +35,8 @@ conn.close()
 
 data = json.loads( content )
 
+
+# display
 if not args.pools:
     # print the server's stats
     addr_str = "%s:%d" % ( args.server_addr, args.server_port )
@@ -60,6 +70,6 @@ if not args.pools:
 
 else:
     for pool in args.pools:
-        print "Pool:", pool
-        pprint( data[pool] )
+        data[pool][u'pool_name'] = pool # inject the poolname so the result looks like valid json
+        print( json.dumps( data[pool], indent=4)  )
 
