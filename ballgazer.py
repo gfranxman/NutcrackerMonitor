@@ -4,8 +4,8 @@
     since nutcracker's status structure doesnt separate its backends from 
     its other configuration details we'll assume those with colons are backends
     we do some trickery with the keys:
-        UPPERCASE keys are pool names
-        lowercase keys are attributes
+        UPPERCASE keys are pool names # our own convention
+        lowercase keys are attributes # our own convention
         keys:with:colons are backend servers
     maybe I should submit a patch that includes a status version number and fixes this to nutcracker
 '''
@@ -16,7 +16,7 @@ import json
 from pprint import pprint
 
 # parse the command line
-parser = argparse.ArgumentParser(description='Nutcracker monitor')
+parser = argparse.ArgumentParser(description='ballgazer -- a TwemProxy/Nutcracker monitor')
 parser.add_argument("server_addr", help="the nutcracker server hostname",)
 parser.add_argument('--port', action='store',dest='server_port', help='the nutcracker port', default=22222, type=int )
 parser.add_argument("pools", metavar='poolname',  nargs='*', help="one or more pool names, empty to list them")
@@ -43,7 +43,16 @@ if not args.pools:
     print addr_str
     print "=" * len( addr_str )
     for k in data.keys():
-        if k[0] == k[0].lower():
+        #if k[0] == k[0].lower():
+        #if data[k][0] != '{':
+        try:
+            data[k]['server_ejects']
+            pass # it's a backend server
+
+        except TypeError, its_a_struct_or_int:
+            print "%10s : %s" % ( k, data[k] )
+            
+        except KeyError, its_a_server_stat:
             print "%10s : %s" % ( k, data[k] )
 
     # display the available pools
