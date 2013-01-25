@@ -9,7 +9,6 @@
 import argparse # python2.7+
 import socket
 import json
-from pprint import pprint
 
 class NutcrackerServer( object ):
     def __init__( self, server='127.0.0.1', port='22222' ):
@@ -45,14 +44,15 @@ class NutcrackerServer( object ):
 
         for k in sorted( self.data.keys() ):
             try:
+                v = self.data[k]
                 # just to prove we are looking at a key for a backend server
-                self.data[k]['server_ejects'] 
+                v['server_ejects'] 
               
-                client_connections = self.data[k]['client_connections']
-                server_ejects = self.data[k]['server_ejects']
+                client_connections = v['client_connections']
+                server_ejects = v['server_ejects']
                 num_of_backends = 0
 
-                for bk in self.data[k].keys():
+                for bk in v.keys():
                     if ":" in bk:
                         num_of_backends += 1
 
@@ -67,7 +67,7 @@ class NutcrackerServer( object ):
                     else:
                         active_pools.append( k )
             except (TypeError, KeyError), not_a_backend:
-                stats[k] =  self.data[k]
+                stats[k] =  v
 
         self.stats = stats
         self.active_pools = sorted( active_pools ) 
@@ -81,8 +81,8 @@ def display_server_status(nutcracker):
     addr_str = "%s:%d" % ( nutcracker.server, nutcracker.port )
     print addr_str
     print "=" * len( addr_str )
-    for k in nutcracker.stats.keys():
-        print "%10s : %s" % ( k, nutcracker.stats[k] )
+    for k,v in nutcracker.stats.items():
+        print "%10s : %s" % ( k, v )
     print "\n"
 
 
@@ -91,13 +91,15 @@ def display_pool_list( title, keys, nutcracker ):
     report_title = title + ' (backends/connections/server_ejections)'
     print report_title
     print "=" * len( report_title )
-    for k in sorted( keys ):
-        client_connections = nutcracker.data[k]['client_connections']
-        server_ejects = nutcracker.data[k]['server_ejects']
+
+    for pool_name in sorted( keys ):
+        pool = nutcracker.data[pool_name]
+        client_connections = pool['client_connections']
+        server_ejects = pool['server_ejects']
         num_of_backends = 0
         footnote = ''
 
-        for bk in nutcracker.data[k].keys():
+        for bk in pool.keys():
             if ":" in bk:
                 num_of_backends += 1
 
@@ -106,8 +108,9 @@ def display_pool_list( title, keys, nutcracker ):
             footnote += '*'
         if server_ejects > 0:
             footnote += '!'
+
         print "%25s ( %d/%d/%d ) %s" % ( 
-            k, 
+            pool_name, 
             num_of_backends, client_connections, server_ejects, 
             footnote,
         )
