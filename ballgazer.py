@@ -35,6 +35,32 @@ conn.close()
 
 data = json.loads( content )
 
+def display_pool_list( title, keys ):
+    report_title = title + ' (backends/connections/server_ejections)'
+    print report_title
+    print "=" * len( report_title )
+    for k in sorted( keys ):
+        client_connections = data[k]['client_connections']
+        server_ejects = data[k]['server_ejects']
+        num_of_backends = 0
+        footnote = ''
+
+        for bk in data[k].keys():
+            if ":" in bk:
+                num_of_backends += 1
+
+       
+        if num_of_backends == 0:
+            footnote += '*'
+        if server_ejects > 0:
+            footnote += '!'
+        print "%25s ( %d/%d/%d ) %s" % ( 
+            k, 
+            num_of_backends, client_connections, server_ejects, 
+            footnote,
+        )
+
+    print "\n\n"
 
 # display
 if not args.pools:
@@ -54,28 +80,36 @@ if not args.pools:
             
         except KeyError, its_a_server_stat:
             print "%10s : %s" % ( k, data[k] )
+    print "\n"
 
     # display the available pools
-    print "\n\n"
-    print "available pools (backends/connections/server_ejections)"
-    print "======================================================="
+    active_pools = []
+    inactive_pools = []
+    broken_pools = []
     for k in sorted( data.keys() ):
         if k[0] == k[0].upper():
             client_connections = data[k]['client_connections']
             server_ejects = data[k]['server_ejects']
             num_of_backends = 0
-            footnote = ''
 
             for bk in data[k].keys():
                 if ":" in bk:
                     num_of_backends += 1
 
-           
-            if num_of_backends == 0:
-                footnote += '*'
-            if server_ejects > 0:
-                footnote += '!'
-            print "%25s ( %d/%d/%d ) %s" % ( k, num_of_backends, client_connections, server_ejects, footnote )
+
+            if client_connections == 0:
+                inactive_pools.append( k )
+            else:
+                if  server_ejects > 0:
+                    broken_pools.append( k )
+                elif num_of_backends == 0:
+                    broken_pools.append( k )
+                else:
+                    active_pools.append( k )
+
+    display_pool_list( "Broken", broken_pools ) 
+    display_pool_list( "Active", active_pools ) 
+    display_pool_list( "Unused", inactive_pools ) 
 
 else:
     for pool in args.pools:
