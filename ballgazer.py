@@ -144,8 +144,8 @@ def main():
 
     else:
         for pool in args.pools:
-            data[pool][u'pool_name'] = pool # inject the poolname so the result looks like valid json
-            print( json.dumps( data[pool], indent=4)  )
+            nutcracker.data[pool][u'pool_name'] = pool # inject the poolname so the result looks like valid json
+            print( json.dumps( nutcracker.data[pool], indent=4)  )
 
 
 
