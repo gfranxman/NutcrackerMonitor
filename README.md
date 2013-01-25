@@ -1,6 +1,11 @@
 Monitor script for nutcracker.
 ==============================
 
+ballgazer.py inspects TwemProxy/nutcracker servers to help monitor its status and debug issues.
+
+When run against a server with no pools specified, you will get all of the configured pools grouped as Active, inactive and broken.   The Broken pools are not neccassarily permanently broken, but have had bck end server ejection events.  It depends on how your pool is configured.  Membership to the Active or Inactive groups is just a function of the number of client connections the server has to that pool.
+
+
 I use it like so:
 
     $ watch -d=cumulative ./ballgazer.py myhost.mydomain.com 
