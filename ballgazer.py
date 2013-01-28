@@ -81,6 +81,9 @@ def display_server_status(nutcracker):
     addr_str = "%s:%d" % ( nutcracker.server, nutcracker.port )
     print addr_str
     print "=" * len( addr_str )
+    print "%10s : %s" % ( 'active',  len(nutcracker.active_pools)) 
+    print "%10s : %s" % ( 'broken',  len(nutcracker.broken_pools)) 
+    print "%10s : %s" % ( 'inactive',  len(nutcracker.inactive_pools)) 
     for k,v in nutcracker.stats.items():
         print "%10s : %s" % ( k, v )
     print "\n"
@@ -120,19 +123,26 @@ def display_pool_list( title, keys, nutcracker ):
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='ballgazer -- a TwemProxy/Nutcracker monitor')
+    parser = argparse.ArgumentParser(description='ballgazer -- a TwemProxy/Nutcracker monitor', argument_default=False )
+    #parser.add_argument( '--help', const=True, action="store_const", dest="show_help" )
     parser.add_argument("server_addr", help="the nutcracker server hostname",)
     parser.add_argument('--port', default=22222, type=int , dest='server_port', 
         action='store', help='the nutcracker port', )
+    parser.add_argument( '--active', const=True, action="store_const", dest="show_active" )
+    parser.add_argument( '--broken', const=True, action="store_const", dest="show_broken" )
+    parser.add_argument( '--unused', const=True, action="store_const", dest="show_unused" )
     parser.add_argument("pools", metavar='poolname',  
         nargs='*', help="one or more pool names, empty to list them")
 
-    return parser.parse_args()
+    args = parser.parse_args()
+
+    return args
 
 
 
 def main():
     args = parse_args()
+        
     nutcracker = NutcrackerServer( args.server_addr, args.server_port )
 
     # display
@@ -141,9 +151,20 @@ def main():
         display_server_status( nutcracker )
     
         # display the available pools
-        display_pool_list( "Broken", nutcracker.broken_pools, nutcracker ) 
-        display_pool_list( "Active", nutcracker.active_pools, nutcracker ) 
-        display_pool_list( "Unused", nutcracker.inactive_pools, nutcracker ) 
+        show_all = True
+        if args.show_active:
+            show_all=False
+        if args.show_broken:
+            show_all=False
+        if args.show_unused:
+            show_all=False
+ 
+        if show_all or args.show_broken:
+            display_pool_list( "Broken", nutcracker.broken_pools, nutcracker ) 
+        if show_all or args.show_active:
+            display_pool_list( "Active", nutcracker.active_pools, nutcracker ) 
+        if show_all or args.show_unused:
+            display_pool_list( "Unused", nutcracker.inactive_pools, nutcracker ) 
 
     else:
         for pool in args.pools:
