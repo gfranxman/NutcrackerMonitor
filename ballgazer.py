@@ -77,7 +77,7 @@ class NutcrackerServer( object ):
 
 
 
-def display_server_status(nutcracker):
+def display_server_status(nutcracker, ignorable_pools=None):
     addr_str = "%s:%d" % ( nutcracker.server, nutcracker.port )
     print addr_str
     print "=" * len( addr_str )
@@ -90,33 +90,36 @@ def display_server_status(nutcracker):
 
 
 
-def display_pool_list( title, keys, nutcracker ):
+def display_pool_list( title, keys, nutcracker, ignorable_pools=None ):
     report_title = title + ' (backends/connections/server_ejections)'
     print report_title
     print "=" * len( report_title )
 
     for pool_name in sorted( keys ):
-        pool = nutcracker.data[pool_name]
-        client_connections = pool['client_connections']
-        server_ejects = pool['server_ejects']
-        num_of_backends = 0
-        footnote = ''
-
-        for bk in pool.keys():
-            if ":" in bk:
-                num_of_backends += 1
-
-       
-        if num_of_backends == 0:
-            footnote += '*'
-        if server_ejects > 0:
-            footnote += '!'
-
-        print "%25s ( %d/%d/%d ) %s" % ( 
-            pool_name, 
-            num_of_backends, client_connections, server_ejects, 
-            footnote,
-        )
+        if ignorable_pools and pool_name in ignorable_pools:
+            pass
+        else:
+            pool = nutcracker.data[pool_name]
+            client_connections = pool['client_connections']
+            server_ejects = pool['server_ejects']
+            num_of_backends = 0
+            footnote = ''
+    
+            for bk in pool.keys():
+                if ":" in bk:
+                    num_of_backends += 1
+    
+           
+            if num_of_backends == 0:
+                footnote += '*'
+            if server_ejects > 0:
+                footnote += '!'
+    
+            print "%25s ( %d/%d/%d ) %s" % ( 
+                pool_name, 
+                num_of_backends, client_connections, server_ejects, 
+                footnote,
+            )
 
     print "\n\n"
 
@@ -131,6 +134,7 @@ def parse_args():
     parser.add_argument( '--active', const=True, action="store_const", dest="show_active" )
     parser.add_argument( '--broken', const=True, action="store_const", dest="show_broken" )
     parser.add_argument( '--unused', const=True, action="store_const", dest="show_unused" )
+    parser.add_argument( '--ignore', action="store", dest="ignore" )
     parser.add_argument("pools", metavar='poolname',  
         nargs='*', help="one or more pool names, empty to list them")
 
@@ -144,6 +148,14 @@ def main():
     args = parse_args()
         
     nutcracker = NutcrackerServer( args.server_addr, args.server_port )
+
+    ignorable_pools = []
+    if args.ignore:
+        f = open( args.ignore, "r" )
+        blacklist = f.readlines()
+        f.close
+        ignorable_pools = map( str.strip, blacklist )
+        print ignorable_pools
 
     # display
     if not args.pools:
@@ -160,11 +172,11 @@ def main():
             show_all=False
  
         if show_all or args.show_broken:
-            display_pool_list( "Broken", nutcracker.broken_pools, nutcracker ) 
+            display_pool_list( "Broken", nutcracker.broken_pools, nutcracker, ignorable_pools ) 
         if show_all or args.show_active:
-            display_pool_list( "Active", nutcracker.active_pools, nutcracker ) 
+            display_pool_list( "Active", nutcracker.active_pools, nutcracker, ignorable_pools ) 
         if show_all or args.show_unused:
-            display_pool_list( "Unused", nutcracker.inactive_pools, nutcracker ) 
+            display_pool_list( "Unused", nutcracker.inactive_pools, nutcracker, ignorable_pools ) 
 
     else:
         for pool in args.pools:
