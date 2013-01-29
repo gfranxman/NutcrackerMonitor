@@ -155,7 +155,6 @@ def main():
         blacklist = f.readlines()
         f.close
         ignorable_pools = map( str.strip, blacklist )
-        print ignorable_pools
 
     # display
     if not args.pools:
