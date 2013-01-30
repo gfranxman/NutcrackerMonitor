@@ -9,6 +9,7 @@
 import argparse # python2.7+
 import socket
 import json
+from datetime import timedelta
 
 class NutcrackerServer( object ):
     def __init__( self, server='127.0.0.1', port='22222' ):
@@ -85,6 +86,8 @@ def display_server_status(nutcracker, ignorable_pools=None):
     print "%10s : %s" % ( 'broken',  len(nutcracker.broken_pools)) 
     print "%10s : %s" % ( 'inactive',  len(nutcracker.inactive_pools)) 
     for k,v in nutcracker.stats.items():
+        if k == 'uptime':
+            v = str( timedelta( seconds=int( v ) ) )
         print "%10s : %s" % ( k, v )
     print "\n"
 
