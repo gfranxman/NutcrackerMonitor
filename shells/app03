@@ -1,0 +1,3 @@
+cd ~/Projects/NutcrackerMonitor
+
+watch ./ballgazer.py --ignore ./ignorable_pools --unused app03.scrippsing.com
